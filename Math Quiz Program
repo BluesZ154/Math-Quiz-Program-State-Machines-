@@ -1,0 +1,361 @@
+#include<iostream>
+#include<sstream>
+#include<string>
+#include<chrono>
+#include<thread>
+#include<atomic>
+#include<cmath>
+#include<vector>
+#include<map>
+#include<algorithm>
+#include<ctime>
+#include<iomanip>
+#include<stack>
+#include<unordered_map>
+#include<fstream>
+#include<set>
+#include<limits>
+#define RED     "\033[1;31m"
+#define BLUE    "\033[1;34m"
+#define RESET   "\033[0m"
+#define FLUSH cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+using namespace std;
+
+enum Page {
+    HOME,
+    PAGE,
+    EXIT,
+    LIST
+};
+
+Page state;
+int option;
+char option2;
+int index = 0;
+
+void HomePage();
+void Page1();
+void Page2();
+void Exit(char &option2);
+void ListPage();
+
+void StateCenter(Page &state, char &option2);
+
+class Quiz{
+    private:
+        string Text;
+        int CorrectAnswer;
+    public:
+    
+        Quiz(string text, int answer) : Text(text), CorrectAnswer(answer) {}
+        
+        bool Check(){
+            int ans;
+            
+            cout<<"Question: "<<Text<<endl;
+            cout<<"Answer: ";
+            cin>>ans;
+            
+            if(ans == CorrectAnswer){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+}; 
+
+vector<Quiz> Questions = {
+    Quiz("10 * 10 + 2 = ?", 102),
+    Quiz("50 / 5 = ?", 10),
+    Quiz("20 * 5 = ?", 100),
+    Quiz("100 * 10 = ?", 1000),
+    Quiz("30 * 3 = ?", 90)
+};
+
+vector<bool> Passed(Questions.size(), false);
+
+void clearScreen() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+template <typename x>
+x SafeInput(const string &Prompt){
+    x value;
+    
+    while(true){
+        cout<<Prompt;
+        cin>>value;
+        
+        if(cin.fail()){
+            cin.clear();
+            FLUSH
+            cout<<"Invalid Input\n";
+        }
+        else{
+            FLUSH
+            return value;
+        }
+    }
+}
+
+void Option(char &option2){
+    
+    do{
+        cout<<"=============\n";
+        cout<<"Enter: \n";
+        cout<<"1.[n] to Next\n";
+        cout<<"2.[b] to Back\n";
+        cout<<"3.[h] to Home\n";
+        cout<<"4.[e] to Exit\n";
+        cout<<"5.[l] to See List\n";
+        cout<<"=============\n";
+        
+        cout<<"Enter: ";
+        cin>>option2;
+        
+        if(option2 != 'n' && option2 != 'b' && option2 != 'h' && option2 != 'e' && option2 != 'l')
+            cout<<"Invalid Input\n";
+    }while(option2 != 'n' && option2 != 'b' && option2 != 'h' && option2 != 'e' && option2 != 'l');
+}
+ 
+void PageControl(Page &state, char &option2){    
+    
+        switch(option2){
+            case 'n':
+                if(state == HOME){
+                    state = PAGE;
+                }
+                else if(state == PAGE){
+                    state = EXIT;
+                }
+                else if(state == EXIT){
+                    state = HOME;
+                }
+                break;
+                
+            case 'b':
+                if(state == HOME){
+                    state = EXIT;
+                }
+                else if(state == PAGE){
+                    state = HOME;
+                }
+                else if(state == EXIT){
+                    state = PAGE;
+                }    
+                break;
+                
+            case 'h': 
+                state = HOME;
+                break;
+                
+            case 'e': 
+                state = EXIT;
+                break;
+                
+            case 'l':
+                state = LIST;
+                break;
+    }
+}
+
+void PrintQuestionPage(int index, Page &state, vector<Quiz> Questions){
+    char decide;
+    
+    cout<<"Question "<<index + 1<<" of "<<Questions.size();
+    cout<<"====Question Page====\n";
+    
+    if(!Passed[index]){
+        if(Questions[index].Check()){
+            cout<<"Your Answer is Correct\n\n";
+            Passed[index] = true;
+        }
+        else cout<<"Your Answer is Wrong\n\n";
+    }
+    else cout<<"You Passed This Question\n";
+    
+    do{
+        cout<<"=============\n";
+        cout<<"Enter: \n";
+        cout<<"1.[n] to Next\n";
+        cout<<"2.[b] to Back\n";
+        cout<<"3.[h] to Home\n";
+        cout<<"4.[e] to Exit\n";
+        cout<<"5.[l] to See List\n";
+        cout<<"=============\n";
+        
+        cout<<"Enter: ";
+        cin>>decide;
+        
+        if(decide != 'n' && decide != 'b' && decide != 'h' && decide != 'e')
+            cout<<"Invalid Input\n";
+    }while(decide != 'n' && decide != 'b' && decide != 'h' && decide != 'e');
+    
+    if(decide == 'n'){
+        if(index != Questions.size() - 1){
+            clearScreen();
+            PrintQuestionPage(index + 1, state, Questions);
+        }
+            else {
+                if(Passed[index]){
+                    clearScreen();
+                    state = EXIT;
+                }
+                else {
+                cout<<"Please Answer Correctly\n";
+                clearScreen();
+                PrintQuestionPage(index, state, Questions);
+                }
+            }
+    }
+    else if(decide == 'b'){
+        if(index != 0) {
+            clearScreen();
+            PrintQuestionPage(index - 1, state, Questions);
+        }
+        else {
+            state = HOME;
+            clearScreen();
+            StateCenter(state, option2);
+        }
+    }
+    else if(decide == 'h'){
+        state = HOME;
+        clearScreen();
+        StateCenter(state, option2);
+    }
+    else if(decide == 'e'){
+        state = EXIT;
+        clearScreen();
+        StateCenter(state, option2);
+    }
+    else {
+        state = LIST;
+        clearScreen();
+        StateCenter(state, option2);
+    }
+       
+} 
+
+void StateCenter(Page &state, char &option2){
+    
+    switch(state){
+        case HOME: 
+            clearScreen();
+            HomePage(); 
+            break;
+            
+        case PAGE:
+            clearScreen();
+            PrintQuestionPage(index, state, Questions);
+            break;
+            
+        case EXIT: 
+            clearScreen();
+            Exit(option2);
+            break;
+            
+        case LIST:
+            clearScreen();
+            ListPage();
+            break;
+    }
+}
+
+void ListPage(){
+    int decide2;
+    
+    cout<<"====Questions List====\n";
+    cout<<"1. Question 1\n";
+    cout<<"2. Question 2\n";
+    cout<<"3. Question 3\n";
+    cout<<"4. Question 4\n";
+    cout<<"5. Question 5\n";
+    cout<<"======================\n";
+    
+    decide2 = SafeInput<int>("Enter 1-5 to Show the Question: ");
+    
+    switch(decide2){
+        case 1:
+            index = decide2 - 1;
+            clearScreen();
+            PrintQuestionPage(index, state, Questions);
+            break;
+        case 2:
+            index = decide2 - 1;
+            clearScreen();
+            PrintQuestionPage(index, state, Questions);
+            break;
+        case 3:
+            index = decide2 - 1;
+            clearScreen();
+            PrintQuestionPage(index, state, Questions);
+            break;
+        case 4:
+            index = decide2 - 1;
+            clearScreen();
+            PrintQuestionPage(index, state, Questions);
+            break;
+        case 5:
+            index = decide2 - 1;
+            clearScreen();
+            PrintQuestionPage(index, state, Questions); 
+            break;
+    }
+}
+
+void HomePage(){
+    cout<<"YOU ARE AT HOME PAGE\n";
+    Option(option2);
+    PageControl(state, option2);
+    StateCenter(state, option2);
+}
+ 
+void Exit(char &option2){
+    int option;
+    
+    cout<<"YOU ARE EXIT PAGE\n";
+    cout<<"1. Quit\n";
+    cout<<"2. Play Again\n";
+    
+    cout<<"Enter: ";
+    cin>>option;
+    
+    if(option == 1){
+        cout<<"Thanks for Playing\n";
+        return;
+    }
+    else if(option == 2){
+        state = HOME;
+        StateCenter(state, option2);
+    }
+} 
+ 
+int main(){
+
+while(true){
+    
+        cout<<"===Welcome to Math Quiz===\n";
+        cout<<"1. Start Quiz\n";
+        cout<<"2. Quit\n";
+        cout<<"==========================\n";
+        
+        option = SafeInput<int>("Enter to Play: ");
+        
+    if(option == 1){
+        state = HOME;
+        StateCenter(state, option2);
+    }
+    else if(option == 2){
+        cout<<"Thanks for Playing\n";
+        return 0;
+    }
+}
+}
+
